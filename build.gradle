@@ -30,6 +30,8 @@ dependencies {
     compile 'ch.qos.logback:logback-core:1.0.1'
 
     compile 'commons-lang:commons-lang:2.6'
+    compile group: 'org.slick2d', name: 'slick2d-core', version: '1.0.0'
+
 
     compileOnly "org.projectlombok:lombok:1.18.10"
     annotationProcessor 'org.projectlombok:lombok:1.18.10'

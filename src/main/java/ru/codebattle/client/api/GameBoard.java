@@ -8,8 +8,18 @@ import java.util.List;
 
 public class GameBoard {
 
-    @Getter
+//    @Getter
     private final String boardString;
+
+    public List<String> getBoardString(){
+        List<String> board = new ArrayList<>();
+        for (int i = 0; i < size(); i++) {
+            board.add(boardString.substring(i * size(), size() * (i+1)));
+        }
+
+
+        return board;
+    }
 
     public GameBoard(String boardString) {
         this.boardString = boardString.replace("\n", "");
