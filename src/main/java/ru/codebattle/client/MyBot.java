@@ -12,192 +12,11 @@ public class MyBot {
     // TODO удалить
     private static List<String> gameBoardList;
 
+    private static List<BoardPoint> points = null;
 
-    public static void nextMove (GameBoard gameBoard) {
-        BoardPoint botLocation = gameBoard.getMyPosition();
+    public static LoderunnerAction lastAction = null;
 
-//        System.out.println(botLocation.getX() + ", Y: " + botLocation.getY());
-
-//        for ( String s : gameBoard.getBoardString()) {System.out.println(s);}
-
-        List<BoardPoint> goldList = gameBoard.getGoldPositions();
-        Map<BoardPoint, Double> distanceMap = new HashMap<>();
-        for (BoardPoint bp : goldList) {
-            double distanceToGold = distance(bp.getY(), bp.getY(), botLocation.getX(), botLocation.getY());
-            distanceMap.put(new BoardPoint(bp.getX(), bp.getY()), distanceToGold);
-        }
-
-        BoardPoint nearestGold = null;
-        Double min = 100.0;
-
-        for (Map.Entry<BoardPoint, Double> entry : distanceMap.entrySet()) {
-            BoardPoint bp = entry.getKey();
-            Double dist = entry.getValue();
-
-            if (dist < min) {
-                min = dist;
-                if (nearestGold == null) nearestGold = new BoardPoint(bp.getX(), bp.getY());
-                else {
-                    nearestGold.setX(bp.getX());
-                    nearestGold.setY(bp.getY());
-                }
-            }
-        }
-
-        assert nearestGold != null;
-//        System.out.println("MIN - X: " + nearestGold.getX() + ", Y: " + nearestGold.getY());
-    }
-
-    public LoderunnerAction firstMove(GameBoard gameBoard, int x, int y) {
-        System.out.println("firstMove: " + x + " " + y);
-//        gameBoard.printBoard();
-
-        gameBoardList = gameBoard.getBoardString();
-
-//        for ( String s : gameBoardList) {System.out.println(s);}
-
-        if (gameBoard.hasPipeAt(new BoardPoint(x, y))) {
-            System.out.println("PIPE AT");
-            return LoderunnerAction.GO_DOWN;
-        }
-
-        double up = 1000.0;
-        double right = 1000.0;
-        double down = 1000.0;
-        double left = 1000.0;
-
-        for (int i = 0; i < 4; i++){
-
-            BoardPoint nextPos;
-
-            switch (i){
-                case 0:
-                    nextPos = new BoardPoint(x, y - 1);
-                    if (gameBoard.hasLadderAt(nextPos)) {
-                        System.out.println("CAN GO UP IN FIRSTMOVE");
-                        up = doMove(gameBoard, LoderunnerAction.GO_UP, nextPos.getX(), nextPos.getY());
-                    }
-                    break;
-
-                case 1:
-                    nextPos = new BoardPoint(x + 1, y);
-                    BoardPoint underMeAtRight = new BoardPoint(x + 1, y + 1);
-
-                    if (gameBoard.hasGoldAt(nextPos)){
-                        return LoderunnerAction.GO_RIGHT;
-                    }
-
-                    if (!gameBoard.hasWallAt(nextPos) && (gameBoard.hasWallAt(underMeAtRight) || gameBoard.hasLadderAt(underMeAtRight))) {
-                        System.out.println("CAN GO RIGHT IN FIRSTMOVE");
-                        right = doMove(gameBoard, LoderunnerAction.GO_RIGHT, nextPos.getX(), nextPos.getY());
-                    }
-                    break;
-
-                case 2:
-                    nextPos = new BoardPoint(x, y + 1);
-                    if (gameBoard.hasLadderAt(nextPos) || !gameBoard.hasWallAt(nextPos)) {
-                        System.out.println("CAN GO DOWN IN FIRSTMOVE");
-                        down = doMove(gameBoard, LoderunnerAction.GO_DOWN, nextPos.getX(), nextPos.getY());
-                    }
-                    break;
-
-                case 3:
-                    nextPos = new BoardPoint(x - 1, y);
-                    BoardPoint underMeAtLeft = new BoardPoint(x - 1, y + 1);
-
-                    if (gameBoard.hasGoldAt(nextPos)){
-                        return LoderunnerAction.GO_LEFT;
-                    }
-
-                    if (!gameBoard.hasWallAt(nextPos) && (gameBoard.hasWallAt(underMeAtLeft) || gameBoard.hasLadderAt(underMeAtLeft))) {
-                        System.out.println("IS SHADOW AT LEFT: " + gameBoard.hasShadowAt(nextPos));
-                        System.out.println("IS OTHER HERO AT LEFT: " + gameBoard.hasOtherHeroAt(nextPos));
-                        System.out.println("CAN GO LEFT IN FIRSTMOVE");
-                        left = doMove(gameBoard, LoderunnerAction.GO_LEFT, nextPos.getX(), nextPos.getY());
-                    }
-                    break;
-            }
-        }
-
-
-        double min = Math.min(Math.min(up, down), Math.min(left, right));
-        System.out.println("MINNNN: " + min + ", UP: " + up + ", RIGHT: " + right + ", DOWN: " + down + ", LEFT: " + left);
-
-
-//        for ( String s : gameBoardList) {System.out.println(s);}
-
-        if (min == left) {
-            return LoderunnerAction.GO_LEFT;
-        }
-        else if (min == right) {
-            return LoderunnerAction.GO_RIGHT;
-        }
-        else if (min == down) {
-            return LoderunnerAction.GO_DOWN;
-        }
-        else if (min == up) {
-            return LoderunnerAction.GO_UP;
-        }
-
-        return LoderunnerAction.DO_NOTHING;
-    }
-
-    private double doMove(GameBoard gameBoard, LoderunnerAction action, int x, int y) {
-        // 0 - UP, 1 - RIGHT, 2 - DOWN, 3 - LEFT
-
-//        System.out.println("doMove: " + x + " " + y);
-
-        List<BoardPoint> goldList = gameBoard.getGoldPositions();
-//        String s = gameBoardList.get(y);
-//
-//        char[] myNameChars = s.toCharArray();
-//        myNameChars[x] = '+';
-//        s = String.valueOf(myNameChars);
-//        gameBoardList.set(y, s);
-
-
-        double up = 1000.0;
-        double right = 1000.0;
-        double down = 1000.0;
-        double left = 1000.0;
-
-//        for (BoardPoint bp : goldList) System.out.println("GOLD X: " + bp.getX() + ", Y: " + bp.getY());
-
-        for (int i = 0; i < 4; i++){
-            if (    (i == 0 && action == LoderunnerAction.GO_DOWN) ||
-                    (i == 1 && action == LoderunnerAction.GO_LEFT) ||
-                    (i == 2 && action == LoderunnerAction.GO_UP) ||
-                    (i == 3 && action == LoderunnerAction.GO_RIGHT)) {
-                continue;
-            }
-
-            switch (i){
-                case 0:
-                    double newUp = upwardMove(gameBoard, x, y);
-                    up = newUp == -1.0 ? up : newUp;
-                    break;
-
-                case 1:
-                    double newRight = rightMove(gameBoard, x, y);
-                    right = newRight == -1.0 ? right : newRight;
-                    break;
-
-                case 2:
-                    double newDown = downwardMove(gameBoard, x, y);
-                    down = newDown == -1.0 ? down : newDown;
-                    break;
-
-                case 3:
-                    double newLeft = leftMove(gameBoard, x, y);
-                    left = newLeft == -1.0 ? left : newLeft;
-                    break;
-            }
-        }
-
-//        System.out.println(", UP: " + up + ", RIGHT: " + right + ", DOWN: " + down + ", LEFT: " + left);
-        return Math.min(Math.min(up, down), Math.min(left, right));
-    }
-
+    public static int count = 0;
 
     public static double distance(int x1, int y1, int x2, int y2) {
         double xDist = Math.pow(x2 - x1, 2);
@@ -206,55 +25,297 @@ public class MyBot {
         return Math.sqrt(xDist + yDist);
     }
 
-    private double upwardMove(GameBoard gameBoard, int x, int y) {
-        BoardPoint nextPos = new BoardPoint(x, y - 1);
-        if (gameBoard.hasLadderAt(nextPos)) {
-            return doMove(gameBoard, LoderunnerAction.GO_UP, nextPos.getX(), nextPos.getY());
+    public static class Path{
+        public BoardPoint bp;
+        public LoderunnerAction lastAction;
+        public LoderunnerAction firstAction;
+
+        public Path(BoardPoint coordinates, LoderunnerAction lastAction, LoderunnerAction firstAction) {
+            this.bp = coordinates;
+            this.lastAction = lastAction;
+            this.firstAction = firstAction;
         }
 
-        return -1.0;
+        public Path(Path path) {
+            this.bp = new BoardPoint(path.bp.getX(), path.bp.getY());
+            this.lastAction = path.lastAction;
+            this.firstAction = path.firstAction;
+        }
     }
 
-    private double rightMove(GameBoard gameBoard, int x, int y) {
-        BoardPoint nextPos = new BoardPoint(x + 1, y);
-        BoardPoint underMeAtRight = new BoardPoint(x + 1, y + 1);
+    public LoderunnerAction iterationMove (GameBoard gameBoard) {
 
-        if (gameBoard.hasGoldAt(nextPos)){
-            BoardPoint botLocation = gameBoard.getMyPosition();
-            return distance(botLocation.getX(), botLocation.getY(), nextPos.getX(), nextPos.getY());
+        if (gameBoard.isGameOver()) return LoderunnerAction.DO_NOTHING;
+
+        count = 0;
+
+        gameBoardList = gameBoard.getBoardString();
+
+        List<Path> pathList = new ArrayList<>();
+
+        List<BoardPoint> points = new ArrayList<>();
+
+        points.add(gameBoard.getMyPosition());
+
+        pathList.add(new Path(gameBoard.getMyPosition(), null, null));
+
+        int i = 0;
+        int timeToSuicide = 25;
+
+        if (lastAction != null) {
+            if (lastAction == LoderunnerAction.DRILL_LEFT) {
+                lastAction = LoderunnerAction.GO_LEFT;
+                return LoderunnerAction.GO_LEFT;
+            }
+            else if (lastAction == LoderunnerAction.DRILL_RIGHT) {
+                lastAction = LoderunnerAction.GO_RIGHT;
+                return LoderunnerAction.GO_RIGHT;
+            }
         }
 
-        if (!gameBoard.hasWallAt(nextPos) && (gameBoard.hasWallAt(underMeAtRight) || gameBoard.hasLadderAt(underMeAtRight))) {
-            return doMove(gameBoard, LoderunnerAction.GO_RIGHT, nextPos.getX(), nextPos.getY());
-        }
 
-        return -1.0;
+        while (true) {
+            List<Path> pathListBuff = new ArrayList<>();
+
+            for (Path path : pathList) {
+
+                // ----------------------------
+                // DOWN
+                // ----------------------------
+
+                Path pathBufDown = new Path(path);
+
+                if (gameBoard.hasSomeInteresting(pathBufDown.bp.shiftBottom())) {
+                    lastAction = pathBufDown.firstAction == null ? LoderunnerAction.GO_DOWN : pathBufDown.firstAction;
+                    return pathBufDown.firstAction == null ? LoderunnerAction.GO_DOWN : pathBufDown.firstAction;
+                }
+
+                if (
+                        (gameBoard.hasLadderAt(pathBufDown.bp.shiftBottom())
+                                || gameBoard.hasAlreadyDrilledPitAt(pathBufDown.bp.shiftBottom())
+                                || gameBoard.hasEmptinessAt(pathBufDown.bp.shiftBottom())
+                                || gameBoard.hasPipeAt(pathBufDown.bp.shiftBottom()))
+                                && !points.contains(path.bp.shiftBottom())
+                                && !gameBoard.hasEnemyAt(pathBufDown.bp.shiftBottom())
+                ) {
+
+                    boolean wasInWhile = false;
+                    while (gameBoard.hasEmptinessAt(pathBufDown.bp.shiftBottom())) {
+                        if (gameBoard.hasSomeInteresting(pathBufDown.bp.shiftBottom())) {
+                            lastAction = pathBufDown.firstAction == null ? LoderunnerAction.GO_DOWN : pathBufDown.firstAction;
+                            return pathBufDown.firstAction == null ? LoderunnerAction.GO_DOWN : pathBufDown.firstAction;
+                        }
+                        pathBufDown.bp.setY(pathBufDown.bp.getY() + 1);
+
+                        setPlus(pathBufDown.bp);
+                        wasInWhile = true;
+                    }
+
+                    if (wasInWhile) {
+                        points.add(pathBufDown.bp);
+                        setPlus(pathBufDown.bp);
+
+                        pathListBuff.add(new Path(pathBufDown.bp, LoderunnerAction.GO_DOWN,
+                                pathBufDown.firstAction == null ? LoderunnerAction.GO_DOWN : pathBufDown.firstAction));
+                    }
+                    else {
+                        points.add(pathBufDown.bp.shiftBottom());
+                        setPlus(pathBufDown.bp.shiftBottom());
+
+                        pathListBuff.add(new Path(pathBufDown.bp.shiftBottom(), LoderunnerAction.GO_DOWN,
+                                pathBufDown.firstAction == null ? LoderunnerAction.GO_DOWN : pathBufDown.firstAction));
+                    }
+                }
+
+
+
+
+                // ----------------------------
+                // UP
+                // ----------------------------
+
+                Path pathBufUp = new Path(path);
+
+                if (
+                        gameBoard.hasLadderAt(pathBufUp.bp)
+                        && !points.contains(path.bp.shiftTop())
+                        && (
+                                gameBoard.hasEmptinessAt(pathBufUp.bp.shiftTop())
+                                || gameBoard.hasLadderAt(pathBufUp.bp.shiftTop())
+                                || gameBoard.hasPipeAt(pathBufUp.bp.shiftTop())
+                                || gameBoard.hasSomeInteresting(pathBufUp.bp.shiftTop())
+                            )
+                        && !gameBoard.hasEnemyAt(pathBufUp.bp.shiftTop())
+                ){
+
+                    if (gameBoard.hasSomeInteresting(pathBufUp.bp.shiftTop())) {
+                        lastAction = pathBufUp.firstAction == null ? LoderunnerAction.GO_UP : pathBufUp.firstAction;
+                        return pathBufUp.firstAction == null ? LoderunnerAction.GO_UP : pathBufUp.firstAction;
+                    }
+
+                    points.add(pathBufUp.bp.shiftTop());
+
+                    pathListBuff.add(new Path(pathBufUp.bp.shiftTop(), LoderunnerAction.GO_UP,
+                            pathBufUp.firstAction == null ? LoderunnerAction.GO_UP : pathBufUp.firstAction));
+                }
+
+                // ----------------------------
+                // LEFT
+                // ----------------------------
+
+                Path pathBufLeft = new Path(path);
+
+                if (
+                        !gameBoard.hasWallAt(pathBufLeft.bp.shiftLeft())    // СЛЕВА НЕТ СТЕНЫ
+                        && pathBufLeft.lastAction != LoderunnerAction.GO_RIGHT
+                        && !gameBoard.hasOtherHeroAt(pathBufLeft.bp.shiftLeft())
+                        && !points.contains(path.bp.shiftLeft())
+                        && !gameBoard.hasEnemyAt(pathBufLeft.bp.shiftLeft())
+
+                ) {
+
+                    if (gameBoard.hasSomeInteresting(pathBufLeft.bp.shiftLeft())) {
+                        lastAction = pathBufLeft.firstAction == null ? LoderunnerAction.GO_LEFT : pathBufLeft.firstAction;
+                        return pathBufLeft.firstAction == null ? LoderunnerAction.GO_LEFT : pathBufLeft.firstAction;
+                    }
+
+                    while (gameBoard.hasEmptinessAt(pathBufLeft.bp.shiftLeft().shiftBottom())) {
+                        pathBufLeft.bp.setY(pathBufLeft.bp.getY() + 1);
+                        setPlus(pathBufLeft.bp);
+                        if (gameBoard.hasSomeInteresting(pathBufLeft.bp.shiftLeft())) {
+                            lastAction = pathBufLeft.firstAction == null ? LoderunnerAction.GO_LEFT : pathBufLeft.firstAction;
+                            return pathBufLeft.firstAction == null ? LoderunnerAction.GO_LEFT : pathBufLeft.firstAction;
+                        }
+//                        i++;
+//                        if (i > timeToSuicide)  return LoderunnerAction.SUICIDE;
+                    }
+
+                    if (gameBoard.hasPipeAt(pathBufLeft.bp.shiftLeft().shiftBottom())) {
+                        points.add(pathBufLeft.bp.shiftLeft().shiftBottom());
+                        MyBot.setPlus(pathBufLeft.bp.shiftLeft().shiftBottom());
+
+                        pathListBuff.add(new Path(pathBufLeft.bp.shiftLeft().shiftBottom(), LoderunnerAction.GO_LEFT,
+                                pathBufLeft.firstAction == null ? LoderunnerAction.GO_LEFT : pathBufLeft.firstAction));
+                    }
+                    else {
+                        points.add(pathBufLeft.bp.shiftLeft());
+                        MyBot.setPlus(pathBufLeft.bp.shiftLeft());
+
+                        pathListBuff.add(new Path(pathBufLeft.bp.shiftLeft(), LoderunnerAction.GO_LEFT,
+                                pathBufLeft.firstAction == null ? LoderunnerAction.GO_LEFT : pathBufLeft.firstAction));
+                    }
+                }
+
+                // ----------------------------
+                // RIGHT
+                // ----------------------------
+                Path pathBufRight = new Path(path);
+
+                if (
+                        !gameBoard.hasWallAt(pathBufRight.bp.shiftRight())  // СПРАВА НЕТ СТЕНЫ
+                        && pathBufRight.lastAction != LoderunnerAction.GO_LEFT
+                        && !gameBoard.hasOtherHeroAt(pathBufRight.bp.shiftRight())
+                        && !points.contains(path.bp.shiftRight())
+                        && !gameBoard.hasEnemyAt(pathBufRight.bp.shiftRight())
+                ){
+
+                    if (gameBoard.hasSomeInteresting(pathBufRight.bp.shiftRight())) {
+                        lastAction = pathBufRight.firstAction == null ? LoderunnerAction.GO_RIGHT : pathBufRight.firstAction;
+                        return pathBufRight.firstAction == null ? LoderunnerAction.GO_RIGHT : pathBufRight.firstAction;
+                    }
+
+                    while (gameBoard.hasEmptinessAt(pathBufRight.bp.shiftRight().shiftBottom())) {
+                        if (gameBoard.hasSomeInteresting(pathBufRight.bp.shiftRight())) {
+                            lastAction = pathBufRight.firstAction == null ? LoderunnerAction.GO_RIGHT : pathBufRight.firstAction;
+                            return pathBufRight.firstAction == null ? LoderunnerAction.GO_RIGHT : pathBufRight.firstAction;
+                        }
+                        pathBufRight.bp.setY(pathBufRight.bp.getY() + 1);
+                        setPlus(pathBufRight.bp);
+//                        i++;
+//                        if (i > timeToSuicide)  return LoderunnerAction.SUICIDE;
+                    }
+
+                    if (gameBoard.hasPipeAt(pathBufRight.bp.shiftRight().shiftBottom())) {
+                        points.add(pathBufRight.bp.shiftRight().shiftBottom());
+                        MyBot.setPlus(pathBufRight.bp.shiftRight().shiftBottom());
+
+                        pathListBuff.add(new Path(pathBufRight.bp.shiftRight().shiftBottom(), LoderunnerAction.GO_RIGHT,
+                                pathBufRight.firstAction == null ? LoderunnerAction.GO_RIGHT : pathBufRight.firstAction));
+                    }
+
+                    else {
+                        points.add(pathBufRight.bp.shiftRight());
+                        MyBot.setPlus(pathBufRight.bp.shiftRight());
+
+                        pathListBuff.add(new Path(pathBufRight.bp.shiftRight(), LoderunnerAction.GO_RIGHT,
+                                pathBufRight.firstAction == null ? LoderunnerAction.GO_RIGHT : pathBufRight.firstAction));
+                    }
+                }
+
+
+                // ----------------------------
+                // DRILL_LEFT
+                // ----------------------------
+
+                Path pathBufDrill = new Path(path);
+
+                if (gameBoard.hasDestroyableWallAt(pathBufDrill.bp.shiftLeft().shiftBottom())
+                    && !gameBoard.hasLadderAt(pathBufDrill.bp.shiftLeft())
+                    && !gameBoard.hasOtherHeroAt(pathBufDrill.bp.shiftLeft())
+                    && !gameBoard.hasWallAt(pathBufDrill.bp.shiftLeft())) {
+                    pathListBuff.add(new Path(pathBufDrill.bp.shiftLeft().shiftBottom(), LoderunnerAction.DRILL_LEFT,
+                            pathBufDrill.firstAction == null ? LoderunnerAction.DRILL_LEFT : pathBufDrill.firstAction));
+                }
+
+                // ----------------------------
+                // DRILL_RIGHT
+                // ----------------------------
+
+                if (gameBoard.hasDestroyableWallAt(pathBufDrill.bp.shiftRight().shiftBottom())
+                    && !gameBoard.hasLadderAt(pathBufDrill.bp.shiftRight())
+                    && !gameBoard.hasOtherHeroAt(pathBufDrill.bp.shiftRight())
+                    && !gameBoard.hasWallAt(pathBufDrill.bp.shiftRight())) {
+                    pathListBuff.add(new Path(pathBufDrill.bp.shiftRight().shiftBottom(), LoderunnerAction.DRILL_RIGHT,
+                            pathBufDrill.firstAction == null ? LoderunnerAction.DRILL_RIGHT : pathBufDrill.firstAction));
+                }
+            }
+            pathList.clear();
+            pathList = pathListBuff;
+
+            System.out.println("i: " + i + ", pathListSize: " + pathList.size() + ", " + pathListBuff.size());
+
+            if (i > timeToSuicide) {
+
+                if (gameBoard.hasEnemyAt(gameBoard.getMyPosition().shiftTop())
+                    || gameBoard.hasEnemyAt(gameBoard.getMyPosition().shiftRight())
+                    || gameBoard.hasEnemyAt(gameBoard.getMyPosition().shiftBottom())
+                    || gameBoard.hasEnemyAt(gameBoard.getMyPosition().shiftLeft())
+                ){
+                   return LoderunnerAction.DO_NOTHING;
+                }
+
+
+
+
+                return LoderunnerAction.SUICIDE;
+            }
+
+            i++;
+        }
     }
 
-    private double downwardMove(GameBoard gameBoard, int x, int y) {
-        BoardPoint nextPos = new BoardPoint(x, y + 1);
-        if (gameBoard.hasLadderAt(nextPos) || !gameBoard.hasWallAt(nextPos)) {
-            return doMove(gameBoard, LoderunnerAction.GO_DOWN, nextPos.getX(), nextPos.getY());
-        }
 
-        return -1.0;
+    public static void setPlus(BoardPoint p){
+        count++;
+        String s = gameBoardList.get(p.getY());
+        char[] myNameChars = s.toCharArray();
+        myNameChars[p.getX()] = (char)((count % 10) + '0');
+        s = String.valueOf(myNameChars);
+        gameBoardList.set(p.getY(), s);
     }
 
-    private double leftMove(GameBoard gameBoard, int x, int y) {
-        BoardPoint nextPos = new BoardPoint(x - 1, y);
-        BoardPoint underMeAtLeft = new BoardPoint(x - 1, y + 1);
+    public void printMap(){
+        for ( String s : gameBoardList) {System.out.println(s);}
 
-        if (gameBoard.hasGoldAt(nextPos)){
-            BoardPoint botLocation = gameBoard.getMyPosition();
-            return distance(botLocation.getX(), botLocation.getY(), nextPos.getX(), nextPos.getY());
-        }
-
-        if (!gameBoard.hasWallAt(nextPos) && (gameBoard.hasWallAt(underMeAtLeft) || gameBoard.hasLadderAt(underMeAtLeft))) {
-            return doMove(gameBoard, LoderunnerAction.GO_LEFT, nextPos.getX(), nextPos.getY());
-        }
-
-        return -1.0;
     }
-
 }
-

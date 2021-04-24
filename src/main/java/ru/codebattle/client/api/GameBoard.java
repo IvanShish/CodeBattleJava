@@ -174,6 +174,30 @@ public class GameBoard {
         return getWallPositions();
     }
 
+    //MY OWN:
+    public List<BoardPoint> getNones() {
+        return findAllElements(BoardElement.NONE);
+    }
+
+    //MY OWN:
+    public List<BoardPoint> getDestroyableWallPositions() {
+        return findAllElements(BoardElement.BRICK);
+    }
+
+    //MY OWN:
+    public List<BoardPoint> getDrillPits() {
+        return findAllElements(BoardElement.DRILL_PIT);
+    }
+
+    //MY OWN:
+    public List<BoardPoint> getAlreadyDrilledPits() {
+        List<BoardPoint> result = findAllElements(BoardElement.PIT_FILL_1);
+        result.addAll(findAllElements(BoardElement.PIT_FILL_2));
+        result.addAll(findAllElements(BoardElement.PIT_FILL_3));
+        result.addAll(findAllElements(BoardElement.PIT_FILL_4));
+        return result;
+    }
+
     public boolean hasElementAt(BoardPoint point, BoardElement... elements) {
         return Arrays.stream(elements).anyMatch(element -> hasElementAt(point, element));
     }
@@ -220,9 +244,40 @@ public class GameBoard {
         return getPortals().contains(point);
     }
 
-    public boolean  hasBarrierAt(BoardPoint point){
+    public boolean hasBarrierAt(BoardPoint point){
         return getBarriers().contains(point);
     }
+
+    //MY OWN:
+    public boolean hasEmptinessAt(BoardPoint point) {
+        return getNones().contains(point);
+    }
+
+    //MY OWN:
+    public boolean hasDestroyableWallAt(BoardPoint point) {
+        return getDestroyableWallPositions().contains(point);
+    }
+
+    //MY OWN:
+    public boolean hasDrillPitAt(BoardPoint point) {
+        return getDrillPits().contains(point);
+    }
+
+    //MY OWN:
+    public boolean hasAlreadyDrilledPitAt(BoardPoint point) {
+        return getAlreadyDrilledPits().contains(point);
+    }
+
+    //MY OWN:
+    public boolean hasShadowPillAt(BoardPoint point) {
+        return getShadowPills().contains(point);
+    }
+
+    //MY OWN:
+    public boolean hasSomeInteresting(BoardPoint p){
+        return hasGoldAt(p) || hasShadowPillAt(p);
+    }
+
 
     private List<BoardPoint> getShadows() {
         List<BoardPoint> shadows = findAllElements(BoardElement.HERO_SHADOW_LEFT);

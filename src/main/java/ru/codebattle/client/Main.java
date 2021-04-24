@@ -24,9 +24,13 @@ public class Main {
 
     private static LoderunnerAction doAction(GameBoard gameBoard) {
         Random random = new Random(System.currentTimeMillis());
-//        MyBot.nextMove(gameBoard);
         MyBot bot = new MyBot();
-        return bot.firstMove(gameBoard, gameBoard.getMyPosition().getX(), gameBoard.getMyPosition().getY());
+
+        LoderunnerAction action =  bot.iterationMove(gameBoard);
+
+        bot.printMap();
+
+        return action;
 //        return LoderunnerAction.values()[random.nextInt(LoderunnerAction.values().length)];
     }
 }
