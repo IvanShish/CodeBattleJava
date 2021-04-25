@@ -8,14 +8,11 @@ import java.util.*;
 
 public class MyBot {
 
-    // TODO удалить
     private static List<String> gameBoardList;
 
     public static LoderunnerAction lastAction = null;
 
     public static int count = 0;
-
-    public static int counterRepeat = 0;
 
     public static class Path{
         public BoardPoint bp;
@@ -54,7 +51,7 @@ public class MyBot {
         pathList.add(new Path(gameBoard.getMyPosition(), null, null));
 
         int i = 0;
-        int timeToSuicide = 25;
+        int timeToSuicide = 20;
 
         if (lastAction != null) {
             if (lastAction == LoderunnerAction.DRILL_LEFT) {
@@ -161,7 +158,6 @@ public class MyBot {
 
                         pathListBuff.add(new Path(pathBufDown.bp.shiftBottom(), LoderunnerAction.GO_DOWN,
                                 pathBufDown.firstAction == null ? LoderunnerAction.GO_DOWN : pathBufDown.firstAction));
-//                    }
                 }
 
 
