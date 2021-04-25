@@ -1,6 +1,5 @@
 package ru.codebattle.client;
 
-import org.newdawn.slick.util.pathfinding.AStarPathFinder;
 import ru.codebattle.client.api.BoardPoint;
 import ru.codebattle.client.api.GameBoard;
 import ru.codebattle.client.api.LoderunnerAction;
@@ -16,12 +15,7 @@ public class MyBot {
 
     public static int count = 0;
 
-    public static double distance(int x1, int y1, int x2, int y2) {
-        double xDist = Math.pow(x2 - x1, 2);
-        double yDist = Math.pow(y2 - y1, 2);
-
-        return Math.sqrt(xDist + yDist);
-    }
+    public static int counterRepeat = 0;
 
     public static class Path{
         public BoardPoint bp;
@@ -71,6 +65,37 @@ public class MyBot {
                 lastAction = LoderunnerAction.GO_RIGHT;
                 return LoderunnerAction.GO_RIGHT;
             }
+            else if (gameBoard.hasPortalAt(gameBoard.getMyPosition())) {    // ЕСЛИ МЫ СТОИМ В ПОРТАЛЕ
+                if (
+                        !gameBoard.hasWallAt(gameBoard.getMyPosition().shiftLeft())    // СЛЕВА НЕТ СТЕНЫ
+                                && !gameBoard.myHasOtherHeroAt(gameBoard.getMyPosition().shiftLeft())
+                                && !points.contains(gameBoard.getMyPosition().shiftLeft())
+                                && !gameBoard.myHasEnemyAt(gameBoard.getMyPosition().shiftLeft())
+                                && (gameBoard.hasWallAt(gameBoard.getMyPosition().shiftBottom())   // ЕСЛИ ПОД НАМИ ЕСТЬ СТЕНА
+                                || gameBoard.hasPipeAt(gameBoard.getMyPosition())              // ИЛИ МЫ ВИСИМ НА ТРУБЕ
+                                || gameBoard.hasLadderAt(gameBoard.getMyPosition())            // ИЛИ МЫ НАХОДИМСЯ НА ЛЕСТНИЦЕ
+                                || gameBoard.hasLadderAt(gameBoard.getMyPosition().shiftBottom())  // ИЛИ ПОД НАМИ ЛЕСТНИЦА
+                                || gameBoard.myHasOtherHeroAt(gameBoard.getMyPosition().shiftBottom())   // ИЛИ ПОД НАМИ ДРУГОЙ ГЕРОЙ
+                        )
+
+                ) {
+                    return LoderunnerAction.GO_LEFT;
+                }
+                else if (
+                        !gameBoard.hasWallAt(gameBoard.getMyPosition().shiftRight())  // СПРАВА НЕТ СТЕНЫ
+                                && !gameBoard.myHasOtherHeroAt(gameBoard.getMyPosition().shiftRight())
+                                && !points.contains(gameBoard.getMyPosition().shiftRight())
+                                && !gameBoard.myHasEnemyAt(gameBoard.getMyPosition().shiftRight())
+                                && (gameBoard.hasWallAt(gameBoard.getMyPosition().shiftBottom())   // ЕСЛИ ПОД НАМИ ЕСТЬ СТЕНА
+                                || gameBoard.hasPipeAt(gameBoard.getMyPosition())              // ИЛИ МЫ ВИСИМ НА ТРУБЕ
+                                || gameBoard.hasLadderAt(gameBoard.getMyPosition())            // ИЛИ МЫ НАХОДИМСЯ НА ЛЕСТНИЦЕ
+                                || gameBoard.hasLadderAt(gameBoard.getMyPosition().shiftBottom())  // ИЛИ ПОД НАМИ ЛЕСТНИЦА
+                                || gameBoard.myHasOtherHeroAt(gameBoard.getMyPosition().shiftBottom())   // ИЛИ ПОД НАМИ ДРУГОЙ ГЕРОЙ
+                        )
+                ) {
+                    return LoderunnerAction.GO_LEFT;
+                }
+            }
         }
 
         count =  0;
@@ -78,7 +103,37 @@ public class MyBot {
         while (true) {
             List<Path> pathListBuff = new ArrayList<>();
 
+            count++;
+
             for (Path path : pathList) {
+                // ----------------------------
+                // IF BOT IS FALLING DOWN
+                // ----------------------------
+
+                if (
+                        ((gameBoard.hasEmptinessAt(path.bp.shiftBottom())               // ЕСЛИ ПОД НАМИ ПУСТОТА
+                            || gameBoard.hasAlreadyDrilledPitAt(path.bp.shiftBottom())  // ИЛИ ПОД НАМИ ПРОСВЕРЛЕННАЯ ДЫРКА
+                            || gameBoard.hasSomeInterestingAt(path.bp.shiftBottom())    // ИЛИ ПОД НАМИ ЗОЛОТО/ТАБЛЕТКА
+                            || gameBoard.hasPortalAt(path.bp.shiftBottom())             // ИЛИ ПОД НАМИ ПОРТАЛ
+                            || gameBoard.hasPipeAt(path.bp.shiftBottom()))              // ИЛИ ПОД НАМИ ТРУБА
+                        && !gameBoard.hasLadderAt(path.bp)                              // ПРИ ЭТОМ МЫ НЕ ВИСИМ НА ЛЕСТНИЦЕ
+                        && !gameBoard.hasPipeAt(path.bp)                                // НЕ ВИСИМ НА ТРУБЕ
+                        && !gameBoard.hasOtherHeroAt(path.bp.shiftBottom())             // ВНИЗУ НЕТ ДРУГОГО ГЕРОЯ
+                        && !gameBoard.hasEnemyAt(path.bp.shiftBottom())                 // И ВРАГА
+                        && !points.contains(path.bp.shiftBottom()))
+                ) {
+
+                    if (gameBoard.hasSomeInterestingAt(path.bp.shiftBottom())) {
+                        lastAction = path.firstAction == null ? LoderunnerAction.DO_NOTHING : path.firstAction;
+                        return path.firstAction == null ? LoderunnerAction.DO_NOTHING : path.firstAction;
+                    }
+                    setPlus(path.bp.shiftBottom());
+                    points.add(path.bp.shiftBottom());
+                    pathListBuff.add(new Path(path.bp.shiftBottom(), LoderunnerAction.GO_DOWN,
+                            path.firstAction == null ? LoderunnerAction.DO_NOTHING : path.firstAction));
+                    continue;
+                }
+
 
                 // ----------------------------
                 // DOWN
@@ -106,7 +161,7 @@ public class MyBot {
 
                         pathListBuff.add(new Path(pathBufDown.bp.shiftBottom(), LoderunnerAction.GO_DOWN,
                                 pathBufDown.firstAction == null ? LoderunnerAction.GO_DOWN : pathBufDown.firstAction));
-                    }
+//                    }
                 }
 
 
@@ -266,6 +321,12 @@ public class MyBot {
 
 //            System.out.println("i: " + i + ", pathListSize: " + pathList.size() + ", " + pathListBuff.size());
 
+
+            if (i > 5 && actionToPortal != null){
+                lastAction = actionToPortal;
+                return actionToPortal;
+            }
+
             if (i > timeToSuicide) {
                 if (gameBoard.myHasEnemyAt(gameBoard.getMyPosition().shiftTop())
                         || gameBoard.myHasEnemyAt(gameBoard.getMyPosition().shiftRight())
@@ -281,17 +342,20 @@ public class MyBot {
         }
     }
 
-    public static void setPlus(BoardPoint p){
-        count++;
-        String s = gameBoardList.get(p.getY());
-        char[] myNameChars = s.toCharArray();
-        myNameChars[p.getX()] = (char)((count % 10) + '0');
-        s = String.valueOf(myNameChars);
-        gameBoardList.set(p.getY(), s);
+    public static void setPlus(BoardPoint p) {
+
+//        String s = gameBoardList.get(p.getY());
+//        char[] myNameChars = s.toCharArray();
+////        System.out.println((char)(count % 10) + '0');
+//        myNameChars[p.getX()] = (char) ((count % 10) + 'A');
+////        myNameChars[p.getX()] = '+';
+//        s = String.valueOf(myNameChars);
+//        gameBoardList.set(p.getY(), s);
+////        count++;
     }
 
     public void printMap(){
-        for ( String s : gameBoardList) {System.out.println(s);}
+//        for ( String s : gameBoardList) {System.out.println(s);}
 
     }
 }
