@@ -274,10 +274,36 @@ public class GameBoard {
     }
 
     //MY OWN:
-    public boolean hasSomeInteresting(BoardPoint p){
+    public boolean hasSomeInterestingAt(BoardPoint p){
+        if (isMyHeroAShadow()) return hasOtherHeroAt(p) || hasEnemyAt(p) || hasGoldAt(p);
         return hasGoldAt(p) || hasShadowPillAt(p);
     }
 
+    //MY OWN:
+    public boolean myHasOtherHeroAt(BoardPoint point) {
+        if (isMyHeroAShadow()) return false;
+        return getOtherHeroPositions().contains(point);
+    }
+
+    //MY OWN:
+    public boolean myHasEnemyAt(BoardPoint point) {
+        if (isMyHeroAShadow()) return false;
+        return getEnemyPositions().contains(point);
+    }
+
+    public boolean isMyHeroAShadow() {
+        List<BoardPoint> shadows = findAllElements(BoardElement.HERO_SHADOW_LEFT);
+        shadows.addAll(findAllElements(BoardElement.HERO_SHADOW_RIGHT));
+        shadows.addAll(findAllElements(BoardElement.HERO_SHADOW_LADDER));
+        shadows.addAll(findAllElements(BoardElement.HERO_SHADOW_PIPE_LEFT));
+        shadows.addAll(findAllElements(BoardElement.HERO_SHADOW_PIPE_RIGHT));
+        shadows.addAll(findAllElements(BoardElement.HERO_SHADOW_DRILL_LEFT));
+        shadows.addAll(findAllElements(BoardElement.HERO_SHADOW_DRILL_RIGHT));
+        shadows.addAll(findAllElements(BoardElement.HERO_SHADOW_FALL_LEFT));
+        shadows.addAll(findAllElements(BoardElement.HERO_SHADOW_FALL_RIGHT));
+
+        return !shadows.isEmpty();
+    }
 
     private List<BoardPoint> getShadows() {
         List<BoardPoint> shadows = findAllElements(BoardElement.HERO_SHADOW_LEFT);
