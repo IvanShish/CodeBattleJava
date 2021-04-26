@@ -8,6 +8,10 @@
 
 Ссылка на то, как играть в loderunner: https://dojorena.io/manuals/46
 
+Бот занял 8 место из 450:
+
+![alt text](https://i.imgur.com/m8L40bK.png)
+
 #### Подготовка 
 Чтобы начать работать потребуется **Java 11**. 
 Так же Gradle версии 4.8.1 или выше
